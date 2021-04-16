@@ -5,3 +5,4 @@
 ^results$
 ^docs$
 ^data-raw$
+^\.github$

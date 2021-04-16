@@ -1,4 +1,7 @@
 # Predicting PO-SCORAD severity score using EczemaPred
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/ghurault/EczemaPredPOSCORAD/workflows/R-CMD-check/badge.svg)](https://github.com/ghurault/EczemaPredPOSCORAD/actions)
+  <!-- badges: end -->
 
 This repository contains the code developed for [**TBC**](#)
 
