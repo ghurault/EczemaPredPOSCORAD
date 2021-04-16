@@ -33,6 +33,9 @@ In addition, [`generate_reports.R`](generate_reports.R) renders reports from [`0
 
 NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
 
+Finally, `data-raw/` contains the code for the exported data available in `data/`.
+Currently, only posterior and prior summary statistics of the EczemaPred models are exported.
+
 ## License
 
 This open source version of this project is licensed under the GPLv3 license, which can be seen in the [LICENSE](LICENSE.md) file.

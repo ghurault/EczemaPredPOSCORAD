@@ -1,0 +1,25 @@
+#' Estimates of EczemaPred models
+#'
+#' The dataset contains the posterior and prior summary statistics of the main parameters
+#' of the EczemaPred models used to predict PO-SCORAD.
+#' The posterior are saved for the "Derexyl" (dataset 1) and "PFDC" dataset.
+#'
+#' @format A dataframe with columns
+#' \describe{
+#'   \item{Mean}{Mean}
+#'   \item{se_mean}{Monte-Carlo standard-error}
+#'   \item{sd}{Standard deviation}
+#'   \item{5%}{5% quantile}
+#'   \item{25%}{25% quantile}
+#'   \item{50%}{50% quantile}
+#'   \item{75%}{75% quantile}
+#'   \item{95%}{95% quantile}
+#'   \item{n_eff}{Effective sample size}
+#'   \item{Rhat}{Rhat convergence diagnostic}
+#'   \item{Variable}{Name of the variable/parameter}
+#'   \item{Index}{(optional) index of the variable}
+#'   \item{Distribution}{Either of "Prior", "Posterior - Derexyl" or "Posterior - PFDC"}
+#'   \item{Model}{Name of the model}
+#'   \item{Item}{Name of the severity item}
+#' }
+"par_POSCORAD"
