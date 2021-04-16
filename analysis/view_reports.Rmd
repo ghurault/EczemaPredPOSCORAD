@@ -1,0 +1,45 @@
+---
+title: "Analysis reports"
+author: "Guillem Hurault"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source(here::here("analysis", "00_init.R"))
+```
+
+You should open this file in the browser rather than in RStudio viewer, otherwise the relative paths may not work.
+
+# Fit
+
+```{r fit-table, results='asis', echo=FALSE, message=FALSE}
+intensity_signs <- detail_POSCORAD("Intensity signs")$Name
+available_models() %>%
+    expand_grid(Dataset = c("Derexyl", "PFDC")) %>%
+  mutate(Model = factor(Model, levels = unique(Model))) %>%
+  arrange(Model) %>%
+  mutate(File = file.path("..", "docs", paste0("fit_", Score, "_", Model, "_", Dataset, ".html")),
+         File = paste0("[", Dataset, "](", File, ")")) %>%
+  group_by(Model, Score) %>%
+  summarise(File = paste0(File, collapse = " - ")) %>%
+  pivot_wider(names_from = "Model", values_from = "File") %>%
+  mutate(across(everything(), ~replace_na(.x, ""))) %>%
+  mutate(Score = factor(Score, levels = c("extent", intensity_signs, "itching", "sleep", "B", "C", "oSCORAD", "SCORAD"))) %>%
+  arrange(Score) %>%
+  knitr::kable()
+```
+
+
+
+# Validation
+
+```{r validation-table, results='asis', echo=FALSE}
+expand_grid(Score = detail_POSCORAD()$Name,
+            Dataset = c("Derexyl", "PFDC")) %>%
+  mutate(File = file.path("..", "docs", paste0("perf4_", Score, "_", Dataset, ".html")),
+         File = paste0("[link](", File, ")")) %>%
+  pivot_wider(names_from = "Dataset", values_from = "File") %>%
+  knitr::kable()
+```

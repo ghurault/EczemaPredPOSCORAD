@@ -6,11 +6,11 @@
 
 rm(list = ls()) # Clear Workspace (better to restart the session)
 
-source("analysis/00_init.R")
+source(here::here("analysis", "00_init.R"))
 library(foreach)
 library(doParallel)
 
-render_fit <- TRUE
+render_fit <- FALSE
 render_perf <- FALSE
 
 render_parallel <- function(input, rpt, ...) {
@@ -28,7 +28,7 @@ render_parallel <- function(input, rpt, ...) {
         input = input,
         params = rpt$Parameter[[i]],
         output_file = rpt$OutputFile[i],
-        output_dir = "docs" ,
+        output_dir = here::here("docs"),
         intermediates_dir = tf,
         ...
       )
@@ -51,7 +51,7 @@ if (render_fit) {
     mutate(Parameters = pmap(list(score = Score, dataset = Dataset, model = Model), list),
            OutputFile = glue::glue("fit_{Score}_{Model}_{Dataset}.html"))
 
-  render_parallel(input = "03_check_fit.Rmd", rpt = rpt, quiet = TRUE)
+  render_parallel(input = here::here("analysis", "03_check_fit.Rmd"), rpt = rpt, quiet = TRUE)
 
 }
 
@@ -65,6 +65,6 @@ if (render_perf) {
     mutate(Parameters = pmap(list(score = score, dataset = dataset, t_horizon = t_horizon), list),
            OutputFile = glue::glue("perf{t_horizon}_{score}_{dataset}.html"))
 
-  render_parallel(input = "05_check_performance.Rmd", rpt = rpt, quiet = TRUE)
+  render_parallel(input = here::here("analysis", "05_check_performance.Rmd"), rpt = rpt, quiet = TRUE)
 
 }
