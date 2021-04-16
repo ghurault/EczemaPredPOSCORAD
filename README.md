@@ -31,6 +31,8 @@ This script is notably useful to simulate data that is similar to the one we use
 In addition, [`generate_reports.R`](generate_reports.R) renders reports from [`03_check_fit.Rmd`](03_check_fit.Rmd) and [`05_check_performance.Rmd`](05_check_performance.Rmd) for all models and severity items/scores.
 [`view_reports.R`](view_reports.R) create an HTML document to easily browse these reports.
 
+NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
+
 ## License
 
 This open source version of this project is licensed under the GPLv3 license, which can be seen in the [LICENSE](LICENSE.md) file.
