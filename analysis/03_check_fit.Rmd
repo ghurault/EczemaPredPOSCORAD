@@ -1,0 +1,260 @@
+---
+title: "Fitting `r params$score` using the `r params$dataset` dataset"
+author: "Guillem Hurault"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+params:
+  model: "BinMC"
+  score: "extent"
+  dataset: "PFDC"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      fig.height = 5,
+                      fig.width = 8,
+                      dpi = 200)
+
+source(here::here("analysis", "00_init.R"))
+
+item_dict <- detail_POSCORAD()
+intensity_signs <- detail_POSCORAD("Intensity signs")$Name
+score <- match.arg(params$score, item_dict$Name)
+
+dataset <- match.arg(params$dataset, c("Derexyl", "PFDC"))
+
+item_dict <- item_dict %>% filter(Name == score)
+item_lbl <- as.character(item_dict[["Label"]])
+max_score <- item_dict[["Maximum"]]
+reso <- item_dict[["Resolution"]]
+
+mdl_name <- match.arg(params$model, available_models(score)$Model)
+
+param <- list_parameters(mdl_name)
+```
+
+```{r load-data}
+# Data
+POSCORAD <- load_dataset(dataset)
+
+# Subset dataset
+df <- POSCORAD %>%
+  # filter(Patient %in% 1:30) %>%
+  rename(Time = Day, Score = all_of(item_lbl)) %>%
+  select(Patient, Time, Score) %>%
+  drop_na()
+
+pt <- unique(df[["Patient"]])
+
+id <- get_index(df)
+df <- left_join(df, id, by = c("Patient", "Time"))
+```
+
+```{r load-results}
+# Results
+file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset)
+fit <- readRDS(here::here(file_dict$Fit))
+par <- readRDS(here::here(file_dict$FitPar))
+if (mdl_name != "MC") {
+  par0 <- readRDS(here::here(file_dict$PriorPar))
+}
+```
+
+# Diagnostics
+
+```{r stan-diagnostics}
+check_hmc_diagnostics(fit)
+
+par %>%
+  select(Rhat) %>%
+  drop_na() %>%
+  summarise(max(Rhat),
+            all(Rhat < 1.1))
+
+tryCatch({
+  pairs(fit, pars = param$Population)
+},
+error = function(e) {NULL})
+
+plot(fit, pars = param$Population, plotfun = "trace")
+```
+
+# Posterior estimates
+
+```{r prior-posterior, fig.height=5, fig.width=10}
+if (mdl_name != "MC") {
+  plot_grid(HuraultMisc::plot_prior_posterior(par0, par, pars = param$Population) + theme_bw(base_size = 15) + theme(legend.position = "top"),
+            HuraultMisc::plot_prior_influence(par0, par, pars = c(param$Population, param$Patient)) + theme(legend.position = "top"),
+            nrow = 1, labels = "AUTO")
+  # ggsave(here("results", paste0("sensitivity_", score, "_", mdl_name, ".jpg")), width = 13, height = 8, units = "cm", dpi = 300, scale = 2)
+}
+```
+
+```{r posterior-OrderedRW}
+if (mdl_name == "OrderedRW") {
+  plot(fit, pars = "ct")
+}
+```
+
+```{r posterior-MC}
+if (mdl_name == "MC") {
+  plot(fit, pars = "p")
+  plot_transition_MC(fit)
+}
+```
+
+```{r patient-parameters, results='asis'}
+if (length(param[["Patient"]]) > 0) {
+  cat("## Patient-dependent parameters ")
+  lapply(param[["Patient"]], function(x) {PPC_group_distribution(fit, x, 50)})
+}
+```
+
+# Posterior Predictive Checks
+
+```{r yrep}
+yrep <- rstan::extract(fit, pars = "y_rep")[[1]] * reso
+```
+
+## Coverage of posterior predictive distribution
+
+```{r ppc-coverage}
+if (mdl_name != "MC") {
+  HuraultMisc::plot_coverage(yrep[, df[["Index"]]], df[["Score"]])
+}
+```
+
+## Posterior predictive p-value for well-controlled-days (averaged across-patients)
+
+```{r ppc-wcd}
+if (mdl_name != "MC") {
+  post_pred_pval(yrep[, df[["Index"]]], df[["Score"]], function(x) {mean(x < max_score * 0.1, na.rm = TRUE)}, plot = TRUE)
+}
+```
+
+## Posterior predictive distribution for normalised amplitude
+
+```{r ppc-amp}
+if (mdl_name != "MC") {
+  lapply(sample(pt, 4),
+         function(pid) {
+           tmp <- df %>%
+             filter(Patient == pid)
+           post_pred_pval(yrep[, tmp[["Index"]]], tmp[["Score"]], function(x) {(max(x) - min(x)) / max_score}, plot = TRUE)$plot +
+             coord_cartesian(xlim = c(0, 1)) +
+             labs(x = "Normalised amplitude", title = paste0("Patient ", pid))
+         }) %>%
+    plot_grid(plotlist = ., ncol = 2)
+}
+```
+
+## Posterior predictive trajectories
+
+```{r ppc-trajectory, fig.height=8, fig.width=12}
+patient_ids <- sort(sample(pt, 2))
+if (mdl_name == "BinRW") {
+  # PPC and Latent trajectory
+  
+  lapply(patient_ids,
+         function(pid) {
+           
+           p1 <- plot_ppc_traj_fanchart(yrep, train = df, test = NULL, patient_id = pid, max_score = max_score) +
+             labs(y = score, title = paste("Patient", pid))
+           
+           p2 <- par %>%
+             filter(Patient == pid & Variable == "y_lat") %>%
+             ggplot(aes(x = Time, y = Mean, ymin = `5%`, ymax = `95%`)) +
+             geom_line() +
+             geom_ribbon(alpha = .5) +
+             coord_cartesian(ylim = c(0, 1)) +
+             scale_x_continuous(expand = c(0, 0)) +
+             labs(y = "Latent score") +
+             theme_bw(base_size = 15)
+           
+           plot_grid(get_legend(p1 + theme(legend.position = "top")),
+                     p1 + theme(legend.position = "none") + labs(title = paste("Patient", pid)),
+                     p2,
+                     ncol = 1, rel_heights = c(1, 5, 5))
+         }) %>%
+    plot_grid(plotlist = ., ncol = 2, labels = "AUTO")
+  # ggsave(here("results", paste0("ppc_", score, "_", mdl_name, "_62_177.jpg")),
+  #      width = 13, height = 8, units = "cm", dpi = 300, scale = 2)
+  
+  
+} else if (mdl_name == "BinMC") {
+  # PPC fanchart and evolution of p01/ss1
+  
+  lapply(patient_ids,
+         function(pid) {
+           
+           p1 <- plot_ppc_traj_fanchart(yrep, train = df, test = NULL, patient_id = pid, max_score = max_score) +
+             labs(y = score, title = paste("Patient", pid))
+           
+           p2 <- par %>%
+             filter(Patient == pid & Variable == "ss1") %>%
+             ggplot(aes(x = Time, y = Mean, ymin = `5%`, ymax = `95%`)) +
+             geom_line() +
+             geom_ribbon(alpha = .5) +
+             coord_cartesian(ylim = c(0, 1)) +
+             scale_x_continuous(expand = c(0, 0)) +
+             labs(y = expression(pi)) +
+             theme_bw(base_size = 15)
+           
+           p3 <- par %>%
+             filter(Patient == pid & Variable == "lambda") %>%
+             ggplot(aes(x = Time, y = Mean, ymin = `5%`, ymax = `95%`)) +
+             geom_line() +
+             geom_ribbon(alpha = .5) +
+             coord_cartesian(ylim = c(-1, 1)) +
+             scale_x_continuous(expand = c(0, 0)) +
+             labs(y = expression(lambda)) +
+             theme_bw(base_size = 15)
+           
+           plot_grid(get_legend(p1 + theme(legend.position = "top")),
+                     p1 + theme(legend.position = "none") + labs(title = paste("Patient", pid)),
+                     p2,
+                     p3,
+                     ncol = 1, rel_heights = c(1, 4, 4, 4))
+         }) %>%
+    plot_grid(plotlist = ., ncol = 2, labels = "AUTO")
+  
+} else if (mdl_name == "OrderedRW") {
+  
+  # PPC and latent score
+  lapply(patient_ids,
+         function(pid) {
+           
+           p1 <- plot_ppc_traj_pmf(yrep, train = df, test = NULL, patient_id = pid, max_score = max_score, max_scale = 1) +
+             labs(y = item_lbl, title = paste("Patient", pid))
+           
+           p2 <- plot_latent_OrderedRW(fit, id, pid) +
+             theme(legend.position = "none")
+           
+           plot_grid(get_legend(p1 + theme(legend.position = "top")),
+                     p1 + theme(legend.position = "none") + labs(title = paste("Patient", pid)),
+                     p2,
+                     ncol = 1, rel_heights = c(1, 5, 5))
+         }) %>%
+    plot_grid(plotlist = ., ncol = 2, labels = "AUTO")
+  # ggsave(paste0("results/ppc_", score, "_", mdl_name, "_62_103.jpg"), width = 13, height = 8, units = "cm", dpi = 300, scale = 2.2)
+  
+} else if (mdl_name %in% c("RW", "AR1", "MixedAR1", "Smoothing")) {
+  
+  pl <- lapply(patient_ids,
+               function(pid) {
+                 plot_ppc_traj_fanchart(fit, train = df, test = NULL, patient_id = pid, max_score = max_score) +
+                   labs(title = paste("Patient", pid))
+               })
+  plot_grid(get_legend(pl[[1]] + theme(legend.position = "top")),
+            plot_grid(plotlist = lapply(pl, function(x) {x + theme(legend.position = "none")}),
+                      ncol = 2,
+                      labels = "AUTO"),
+            ncol = 1,
+            rel_heights = c(1, 10))
+  
+  # ggsave(here("results", paste0("ppc_", score, "_", mdl_name, ".jpg")),
+  #          width = 13, height = 8, units = "cm", dpi = 300, scale = 2)
+  
+}
+```

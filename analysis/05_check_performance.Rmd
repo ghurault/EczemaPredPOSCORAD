@@ -1,0 +1,186 @@
+---
+title: "Predictive performance of `r params$score` using the `r params$dataset` dataset"
+author: "Guillem Hurault"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+params:
+  score: "extent"
+  dataset: "PFDC"
+  t_horizon: 4
+  pred_horizon: 4
+  max_horizon: 14
+  acc_thr: 5.0
+  p_thr: 0.95
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE,
+                      fig.height = 5,
+                      fig.width = 12,
+                      dpi = 200)
+
+# Params:
+# - t_horizon: horizon that was used for forward chaining
+# - pred_horizon: prediction horizon to plot
+# - max_horizon: remove predictions where horizon > max_horizon
+# - acc_thr: accuracy threshold
+# - p_thr: probability threshold for quantile error
+
+source(here::here("analysis", "00_init.R"))
+
+item_dict <- detail_POSCORAD()
+score <- match.arg(params$score, c(item_dict[["Name"]]))
+intensity_signs <- detail_POSCORAD("Intensity signs")$Name
+dataset <- match.arg(params$dataset, c("Derexyl", "PFDC"))
+
+max_score <- item_dict %>% filter(Name == score) %>% pull(Maximum)
+
+if (score == "extent") {
+  mdl_names <- c("uniform", "historical", "RW", "BinRW", "BinMC")
+  comp_mdl <- "RW" # "BinRW"
+} else if (score %in% c("itching", "sleep")) {
+  mdl_names <- c("uniform", "historical", "RW", "BinRW")
+  comp_mdl <- "RW" # "BinRW"
+} else if (score %in% intensity_signs) {
+  mdl_names <- c("uniform", "historical", "MC", "OrderedRW")
+  comp_mdl <- "MC"
+} else if (score %in% c("B")) {
+  mdl_names <- c("uniform", "historical", "RW", "BinRW", "CombinedMC", "CombinedOrderedRW")
+  comp_mdl <- "RW" # "CombinedMC"
+} else if (score == "C") {
+  mdl_names <- c("uniform", "historical", "RW", "BinRW", "CombinedBinRW")
+  comp_mdl <- "RW" # "BinMRW"
+} else if (score %in% c("SCORAD", "oSCORAD")) {
+  mdl_names <- c("uniform", "historical", "RW", "AR1", "MixedAR1", "Smoothing", "EczemaPred")
+  comp_mdl <- "RW"
+}
+
+res_files <- sapply(mdl_names,
+                    function(m) {
+                      here(get_results_files(outcome = score, model = m, dataset = dataset, val_horizon = params$t_horizon)$Val)
+                    })
+
+stopifnot(params$t_horizon > 0,
+          params$pred_horizon > 0,
+          params$max_horizon > params$pred_horizon,
+          all(file.exists(res_files)),
+          length(comp_mdl) == 1,
+          comp_mdl %in% mdl_names)
+
+fc_it <- load_dataset(dataset) %>%
+  rename(Time = Day) %>%
+  detail_fc_training(df = ., params$t_horizon)
+```
+
+## Learning curves and performance change for increasing prediction horizon
+
+```{r perf-curves}
+if (score %in% c("SCORAD", "oSCORAD")) {
+  metrics <-  c("lpd", "CRPS", "Accuracy", "QE")
+} else {
+  metrics <- c("lpd", "RPS")
+}
+
+pl <- lapply(metrics,
+             function(metric) {
+               
+               perf <- lapply(1:length(mdl_names),
+                              function(i) {
+                                # NB:  Can have problem predicting from prior predictive distribution for RW models
+                                res <- readRDS(res_files[i])
+                                if (metric == "Accuracy") {
+                                  res <- res %>%
+                                    mutate(Accuracy = compute_accuracy(res[["Score"]], res[["Samples"]], params$acc_thr))
+                                }
+                                if (metric == "QE") {
+                                  res <- res %>%
+                                    mutate(QE = compute_quantile_error(res[["Score"]], res[["Samples"]], params$p_thr))
+                                }
+                                res %>%
+                                  filter(Horizon <= params$max_horizon,
+                                         Iteration > 0 | mdl_names[i] != "RW") %>%
+                                  estimate_performance(metric, ., fc_it, adjust_horizon = !(mdl_names[i] %in% c("historical", "uniform"))) %>%
+                                  mutate(Model = mdl_names[i])
+                              }) %>%
+                 bind_rows() %>%
+                 mutate(Model = factor(Model, levels = mdl_names))
+               
+               p1 <- perf %>%
+                 filter(Variable == "Fit",
+                        Horizon == params$pred_horizon) %>%
+                 plot_learning_curves(perf = ., metric = metric, fc_it = fc_it)
+               
+               p2 <- perf %>%
+                 filter(Variable == "Horizon") %>%
+                 plot_horizon_change()
+               
+               plot_grid(p1 + theme(legend.position = "none"),
+                         p2 + theme(legend.position = "none"),
+                         get_legend(p1 + theme(legend.position = "right")),
+                         nrow = 1, rel_widths = c(4, 3, 1), labels = c("A", "B", ""))
+               
+             })
+names(pl) <- metrics
+pl
+
+if (FALSE) {
+  # Save plots
+  for (i in 1:length(metrics)) {
+    ggsave(plot = pl[[i]],
+           filename = here("results", paste0(score, "_", metrics[i], ".jpg")),
+           width = 13, height = 8, dpi = 300, units = "cm", scale = 2)
+  }
+}
+```
+
+## $\Delta$ lpd (observation-level)
+
+```{r perf-deltalpd}
+res <- lapply(1:length(mdl_names),
+              function(i) {
+                # NB:  Can have problem predicting from prior predictive distribution for RW models
+                readRDS(res_files[i]) %>%
+                  filter(Horizon <= params$max_horizon,
+                         Iteration > 0 | mdl_names[i] != "RW") %>% 
+                  mutate(Model = mdl_names[i])
+              }) %>%
+  bind_rows() %>%
+  mutate(Model = factor(Model, levels = mdl_names))
+
+# lpd_diff vs training iteration
+# alternative to meta-model: no need to control for prediction horizon or patient with non-constant forecast
+brk <- c(.01, .1, .5, 1, 2, 10, 100)
+p3 <- res %>%
+  filter(!(Model %in% c("uniform", "historical"))) %>%
+  compute_skill_scores(., ref_mdl = comp_mdl, metrics = "lpd") %>%
+  filter(Horizon <= params$max_horizon,
+         abs(lpd_diff) < Inf) %>%
+  group_by(Model, Iteration) %>%
+  summarise(Mean = mean(lpd_diff), SD = sd(lpd_diff), SE = SD / sqrt(n())) %>%
+  drop_na() %>%
+  left_join(., fc_it, by = "Iteration") %>%
+  plot_learning_curves(perf = ., metric = paste0("lpd - lpd(", comp_mdl, ")"), fc_it = fc_it) +
+  scale_y_continuous(breaks = log(brk), labels = paste0("log(", brk, ")"))
+# p3
+
+# lpd_diff (ref is historical) vs y
+# "error" relative to a historical forecast
+p4 <- res %>%
+  compute_skill_scores(., ref_mdl = "historical", metrics = "lpd") %>%
+  filter(Horizon <= params$max_horizon,
+         abs(lpd_diff) < Inf,
+         Iteration > 0) %>%
+  plot_perf_vs_score(perf = ., metric = "lpd_diff", discrete = (score %in% intensity_signs), max_score = max_score)
+# p4
+
+
+tryCatch({
+  plot_grid(p3, p4, nrow = 1, labels = "AUTO")
+},
+error = function(e) {
+  p3
+})
+# ggsave(here("results", paste0(score, "_lpd_diff.jpg")), width = 13, height = 8, dpi = 300, units = "cm", scale = 2.5)
+```
