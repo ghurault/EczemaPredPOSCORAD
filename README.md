@@ -32,17 +32,17 @@ help(package = "EczemaPredPOSCORAD")
 
 The analysis code is located in the [`analysis/`](analysis/) directory:
 
-- [`01a_check_models_items.R`](01a_check_models_items.R) and [`01b_check_models_poscorad.R`](01b_check_models_poscorad.R): Conduct prior predictive checks and fake data check of the severity item models and the PO-SCORAD models, respectively.
+- [`01_check_models.R`](analysis/01_check_models.R) : Conduct prior predictive checks and fake data check of the severity item models and the PO-SCORAD models.
 This script is notably useful to simulate data that is similar to the one we used.
-- [`02_run_fit.R`](02_run_fit.R): Fit the severity items and PO-(o)SCORAD models to real data.
-- [`03_check_fit.Rmd`](03_check_fit.Rmd): Diagnose fit, inspect posterior, posterior predictive checks.
-- [`04a_run_validation.R`](04a_run_validation.R): Run the validation process (forward chaining) for the severity item models and the PO-(o)SCORAD models.
-- [`04b_combine_items.R`](04b_combine_items.R): combine predictions of severity items to produce predictions for PO-(o)SCORAD.
-- [`05_check_performance.Rmd`](05_check_performance.Rmd): Analyse validation results for severity items and PO-(o)SCORAD.
-- [`06a_plot_data.R`](06a_plot_data.R), [`06b_plot_performance_items.R`](06b_plot_performance_items.R), [`06c_plot_performance_poscorad.R`](06c_plot_performance_poscorad.R) and [`06d_plot_prediction_curves.R`](06d_plot_prediction_curves.R): generate the figures presented in the paper.
+- [`02_run_fit.R`](analysis/02_run_fit.R): Fit the severity items and PO-(o)SCORAD models to real data.
+- [`03_check_fit.Rmd`](analysis/03_check_fit.Rmd): Diagnose fit, inspect posterior, posterior predictive checks.
+- [`04a_run_validation.R`](analysis/04a_run_validation.R): Run the validation process (forward chaining) for the severity item models and the PO-(o)SCORAD models.
+- [`04b_combine_items.R`](analysis/04b_combine_items.R): combine predictions of severity items to produce predictions for PO-(o)SCORAD.
+- [`05_check_performance.Rmd`](analysis/05_check_performance.Rmd): Analyse validation results for severity items and PO-(o)SCORAD.
+- [`06a_plot_data.R`](analysis/06a_plot_data.R), [`06b_plot_performance_items.R`](analysis/06b_plot_performance_items.R), [`06c_plot_performance_poscorad.R`](analysis/06c_plot_performance_poscorad.R) and [`06d_plot_prediction_curves.R`](analysis/06d_plot_prediction_curves.R): generate the figures presented in the paper.
 
-In addition, [`generate_reports.R`](generate_reports.R) renders reports from [`03_check_fit.Rmd`](03_check_fit.Rmd) and [`05_check_performance.Rmd`](05_check_performance.Rmd) for all models and severity items/scores.
-[`view_reports.R`](view_reports.R) create an HTML document to easily browse these reports.
+In addition, [`generate_reports.R`](analysis/generate_reports.R) renders reports from [`03_check_fit.Rmd`](analysis/03_check_fit.Rmd) and [`05_check_performance.Rmd`](analysis/05_check_performance.Rmd) for all models and severity items/scores.
+[`view_reports.R`](analysis/view_reports.R) create an HTML document to easily browse these reports.
 
 NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
 

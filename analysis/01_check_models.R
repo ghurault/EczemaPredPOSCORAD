@@ -1,6 +1,11 @@
 # Notes -------------------------------------------------------------------
 
-# Prior predictive check and Fake data check for benchmark models predicting SCORAD/oSCORAD
+# Prior predictive check and Fake data check for different models:
+# - RW (for extent, subjective symptoms, oSCORAD, SCORAD)
+# - BinRW (for extent and subjective symptoms)
+# - BinMC (for extent)
+# - OrderedRW (for intensity signs)
+# - Smoothing, AR1, MixedAR1 (for oSCORAD, SCORAD)
 
 # Initialisation ----------------------------------------------------------
 
@@ -11,8 +16,8 @@ set.seed(1744834965) # Reproducibility (Stan use a different seed)
 source(here::here("analysis", "00_init.R"))
 
 #### OPTIONS
-mdl_name <- "MixedAR1"
-score <- "SCORAD"
+mdl_name <- "BinMC"
+score <- "extent"
 n_pt <- 5
 n_dur <- rpois(n_pt, 50)
 run_prior <- FALSE
@@ -21,8 +26,10 @@ n_chains <- 4
 n_it <- 2000
 ####
 
-score <- match.arg(score, c("SCORAD", "oSCORAD"))
-mdl_name <- match.arg(mdl_name, c("RW", "AR1", "MixedAR1", "Smoothing"))
+score <- match.arg(score, c("extent", "intensity", "subjective", "B", "C", "oSCORAD", "SCORAD"))
+mdl_name <- match.arg(mdl_name, c("RW", "BinRW", "BinMC", "OrderedRW", "AR1", "MixedAR1", "Smoothing"))
+is_continuous <- (score %in% c("SCORAD", "oSCORAD"))
+
 stopifnot(is_scalar_wholenumber(n_pt),
           n_pt > 0,
           all(is_wholenumber(n_dur)),
@@ -34,7 +41,11 @@ stopifnot(is_scalar_wholenumber(n_pt),
           is_scalar_wholenumber(n_it),
           n_it > 0)
 
-max_score <- detail_POSCORAD(score)$Maximum
+max_score <- case_when(score == "subjective" ~ 10,
+                       score == "intensity" ~ 3,
+                       TRUE ~ detail_POSCORAD(score)$Maximum)
+reso <- case_when(score %in% c("extent", "intensity", "B", "oSCORAD", "SCORAD") ~ 1,
+                  score %in% c("subjective", "C") ~ 0.1)
 
 file_dict <- get_results_files(outcome = score, model = mdl_name)
 
@@ -46,13 +57,23 @@ param$Test <- NULL
 id <- get_index2(n_pt, n_dur)
 
 if (run_prior) {
-  fit_prior <- sample_prior_continuous(N_patient = n_pt,
+  if (is_continuous) {
+    fit_prior <- sample_prior_continuous(N_patient = n_pt,
+                                         t_max = n_dur,
+                                         max_score = max_score,
+                                         model = mdl_name,
+                                         pars = unlist(param),
+                                         iter = n_it,
+                                         chains = n_chains)
+  } else {
+    fit_prior <- sample_prior_discrete(N_patient = n_pt,
                                        t_max = n_dur,
-                                       max_score = max_score,
+                                       max_score = round(max_score / reso),
                                        model = mdl_name,
                                        pars = unlist(param),
                                        iter = n_it,
                                        chains = n_chains)
+  }
   saveRDS(fit_prior, file = file_dict$PriorFit)
   par0 <- extract_parameters(fit_prior, pars = param, id = id)
   saveRDS(par0, file = file_dict$PriorPar)
@@ -61,7 +82,7 @@ if (run_prior) {
   par0 <- readRDS(file_dict$PriorPar)
 }
 
-yrep <- rstan::extract(fit_prior, pars = "y_rep")[[1]]
+yrep <- rstan::extract(fit_prior, pars = "y_rep")[[1]] * reso
 
 if (FALSE) {
 
@@ -96,9 +117,9 @@ if (FALSE) {
   # Draw from predictive distribution (first patient)
   lapply(sample(nrow(yrep1), 4),
          function(i) {
-           ggplot(data = data.frame(t = 1:n_dur[1],
-                                    y = yrep1[i, ]),
-                  aes(x = t, y = y)) +
+           ggplot(data = data.frame(Time = 1:n_dur[1],
+                                    Score = yrep1[i, ]),
+                  aes(x = Time, y = Score)) +
              geom_line() +
              coord_cartesian(ylim = c(0, max_score)) +
              theme_bw(base_size = 15)
@@ -136,8 +157,10 @@ fd <- lapply(1:n_pt,
 # Plot different patients trajectories
 lapply(sample(1:n_pt, min(n_pt, 4)),
        function(pid) {
-         ggplot(data = fd %>% filter(Patient == pid) %>% drop_na(),
-                aes(x = Time, y = Score)) +
+         fd %>%
+           filter(Patient == pid) %>%
+           drop_na() %>%
+           ggplot(aes(x = Time, y = Score)) +
            geom_line() +
            geom_point() +
            coord_cartesian(ylim = c(0, max_score)) +
@@ -161,14 +184,25 @@ id <- get_index(train, test)
 fd <- left_join(fd, id, by = c("Patient", "Time"))
 
 if (run_fake) {
-  fit_fake <- fit_continuous(train = train,
-                             test = test,
-                             max_score = max_score,
+  if (is_continuous) {
+    fit_fake <- fit_continuous(train = train,
+                               test = test,
+                               max_score = max_score,
+                               model = mdl_name,
+                               pars = unlist(param),
+                               iter = n_it,
+                               chains = n_chains,
+                               control = list(adapt_delta = 0.9))
+  } else {
+    fit_fake <- fit_discrete(train = train %>% mutate(Score = round(Score / reso)),
+                             test = test %>% mutate(Score = round(Score / reso)),
+                             max_score = round(max_score / reso),
                              model = mdl_name,
                              pars = unlist(param),
                              iter = n_it,
                              chains = n_chains,
                              control = list(adapt_delta = 0.9))
+  }
   saveRDS(fit_fake, file = file_dict$FakeFit)
 } else {
   fit_fake <- readRDS(file_dict$FakeFit)
@@ -203,17 +237,29 @@ if (FALSE) {
     theme_bw(base_size = 20)
 
   ## Posterior predictive checks
+  yrep_fake <- rstan::extract(fit_fake, pars = "y_rep")[[1]] * reso
   patient_ids <- sample(1:n_pt, min(4, n_pt))
-  pl5 <- lapply(patient_ids,
-                function(pid) {
-                  plot_ppc_traj_fanchart(fit_fake, train = train, test = test, patient_id = pid, max_score = max_score) +
-                    labs(title = paste("Patient", pid))
-                })
+  if (score %in% c("intensity", "B")) {
+    # PPC pmf (need to change the scale if reso != 1)
+    pl5 <- lapply(patient_ids,
+                  function(pid) {
+                    plot_ppc_traj_pmf(yrep_fake, train = train, test = test, patient_id = pid, max_score = max_score, max_scale = 1) +
+                      labs(title = paste("Patient", pid))
+                  })
+
+  } else {
+    # PPC fanchart
+    pl5 <- lapply(patient_ids,
+                  function(pid) {
+                    plot_ppc_traj_fanchart(yrep_fake, train = train, test = test, patient_id = pid, max_score = max_score) +
+                      labs(title = paste("Patient", pid))
+                  })
+  }
+
   plot_grid(get_legend(pl5[[1]] + theme(legend.position = "top", legend.key.size = unit(1, "cm"))),
             plot_grid(plotlist = lapply(pl5, function(p) {p + theme(legend.position = "none")}), ncol = 2),
             ncol = 1, rel_heights = c(.1, .9))
 
-  yrep_fake <- rstan::extract(fit_fake, pars = "y_rep")[[1]]
   # Coverage of the posterior predictive distribution
   HuraultMisc::plot_coverage(yrep_fake[, fd[["Index"]]], fd[["Score"]])
   # Posterior predictive p-value for well-controlled-days (averaged across-patients)
@@ -223,11 +269,26 @@ if (FALSE) {
          function(pid) {
            tmp <- fd %>%
              filter(Patient == pid)
-           post_pred_pval(yrep[, tmp[["Index"]]], tmp[["Score"]], function(x) {(max(x, na.rm = TRUE) - min(x, na.rm = TRUE)) / max_score},
-                          plot = TRUE)$plot +
+           post_pred_pval(yrep[, tmp[["Index"]]], tmp[["Score"]], function(x) {(max(x, na.rm = TRUE) - min(x, na.rm = TRUE)) / max_score}, plot = TRUE)$plot +
              coord_cartesian(xlim = c(0, 1)) +
              labs(x = "Normalised amplitude")
          }) %>%
     plot_grid(plotlist = ., ncol = 2)
+
+}
+
+# Additional checks for BinMC -------------------------------------------------------
+
+if (FALSE) {
+
+  # Coverage of p10
+  HuraultMisc::plot_coverage(rstan::extract(fit_fake, pars = "p10")[[1]],
+                             tmp[tmp[["Variable"]] == "p10", "True"])
+
+  PPC_group_distribution(fit_fake, "p10", 20) + coord_cartesian(xlim = c(0, 1))
+
+  # Coverage of y_lat
+  HuraultMisc::plot_coverage(rstan::extract(fit_fake, pars = "y_lat")[[1]],
+                             tmp[tmp[["Variable"]] == "y_lat", "True"])
 
 }
