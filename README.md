@@ -12,13 +12,23 @@ The code is written in the R language for statistical computing and the probabil
 This repository is organized as an R package/research compendium, providing functions for our analysis.
 Nevertheless, this package has been written explicitly for this project and may not yet be suitable for more general purpose use.
 
+The package can be installed with (the dependency argument will make sure to install all the packages required for the analysis):
+```{r}
+devtools::install_github("ghurault/EczemaPredPOSCORAD", dependencies = TRUE)`
+```
+
 This project notably depends on three packages:
 
 - [EczemaPred](https://github.com/ghurault/EczemaPred), [version **TBC**](), which contains the different Stan models, including the reference models.
 - [HuraultMisc](https://github.com/ghurault/HuraultMisc), my personal package containing various data analysis functions.
 - TanakaData, a proprietary package containing loading the datasets used in this study, but unavailable due to our data sharing agreement (**TBC**). This package includes the raw files as well as data processing functions.
 
-Functions specific to this project are located in [`R/`](R/).
+Functions specific to this project are located in [`R/`](R/), and can be accessed by loading the package in `R`:
+
+```{r}
+library(EczemaPredPOSCORAD)
+help(package = "EczemaPredPOSCORAD")
+```
 
 The analysis code is located in the [`analysis/`](analysis/) directory:
 
@@ -36,7 +46,7 @@ In addition, [`generate_reports.R`](generate_reports.R) renders reports from [`0
 
 NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
 
-Finally, `data-raw/` contains the code for the exported data available in `data/`.
+Finally, [`data-raw/`](data-raw/) contains the code for the exported data available in [`data/`](data/).
 Currently, only posterior and prior summary statistics of the EczemaPred models are exported.
 
 ## License
