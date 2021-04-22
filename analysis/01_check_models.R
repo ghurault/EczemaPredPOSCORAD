@@ -54,7 +54,7 @@ param$Test <- NULL
 
 # Prior predictive check -------------------------------------------------
 
-id <- get_index2(n_pt, n_dur)
+id <- get_index2(n_dur)
 
 if (run_prior) {
   if (is_continuous) {
@@ -129,19 +129,15 @@ if (FALSE) {
 
 # Fitting fake data ---------------------------------------------------------
 
+### OPTIONS
+draw <- 4 # different draws corresponds to different a priori pattern in the data
 p_mis <- .25
 p_obs_obs <- .75
 horizon <- 5
+###
 
-# Take one draw (different draws corresponds to different a priori pattern in the data)
-draw <- 4
-
-true_param <- rstan::extract(fit_prior, pars = unlist(param)) %>% extract_draws(draw)
-
-# Dataframe of fake trajectories
-fd <- id %>%
-  mutate(Score = yrep[draw, ]) %>%
-  select(-Index)
+l <- extract_simulations(fit_prior, id = id, draw = draw, pars = unlist(param[c("Population", "Patient")]))
+fd <- l$Data %>% select(-Index)
 
 # Add missing values (but not at the beginning and end of the time-series)
 fd <- lapply(1:n_pt,
@@ -154,21 +150,7 @@ fd <- lapply(1:n_pt,
              }) %>%
   bind_rows()
 
-# Plot different patients trajectories
-lapply(sample(1:n_pt, min(n_pt, 4)),
-       function(pid) {
-         fd %>%
-           filter(Patient == pid) %>%
-           drop_na() %>%
-           ggplot(aes(x = Time, y = Score)) +
-           geom_line() +
-           geom_point() +
-           coord_cartesian(ylim = c(0, max_score)) +
-           theme_bw(base_size = 15)
-       }) %>%
-  plot_grid(plotlist = ., ncol = 2)
-
-# Process data for fitting
+# Split dataset
 fd <- fd %>%
   drop_na() %>%
   group_by(Patient) %>%
@@ -177,6 +159,24 @@ fd <- fd %>%
                            TRUE ~ "Testing")) %>%
   select(-t_max) %>%
   ungroup()
+
+# Plot different patients trajectories
+lapply(sample(1:n_pt, min(n_pt, 4)),
+       function(pid) {
+         fd %>%
+           filter(Patient == pid) %>%
+           drop_na() %>%
+           ggplot(aes(x = Time, y = Score, colour = Label)) +
+           geom_line() +
+           geom_point() +
+           scale_colour_manual(values = HuraultMisc::cbbPalette[c(2, 1)]) +
+           coord_cartesian(ylim = c(0, max_score)) +
+           labs(colour = "") +
+           theme_bw(base_size = 15) +
+           theme(legend.position = "top")
+       }) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
 train <- fd %>% filter(Label == "Training")
 test <- fd %>% filter(Label == "Testing")
 
@@ -224,7 +224,7 @@ if (FALSE) {
 
   ## Can we recover known parameters?
   tmp <- par_fake %>%
-    full_join(true_param, by = c("Variable" = "Parameter", "Index")) %>%
+    full_join(l$Parameters, by = c("Variable" = "Parameter", "Index")) %>%
     rename(True = Value)
   # Population parameters
   ggplot(data = subset(tmp, Variable %in% param$Population),
@@ -255,7 +255,6 @@ if (FALSE) {
                       labs(title = paste("Patient", pid))
                   })
   }
-
   plot_grid(get_legend(pl5[[1]] + theme(legend.position = "top", legend.key.size = unit(1, "cm"))),
             plot_grid(plotlist = lapply(pl5, function(p) {p + theme(legend.position = "none")}), ncol = 2),
             ncol = 1, rel_heights = c(.1, .9))
@@ -275,20 +274,12 @@ if (FALSE) {
          }) %>%
     plot_grid(plotlist = ., ncol = 2)
 
-}
-
-# Additional checks for BinMC -------------------------------------------------------
-
-if (FALSE) {
-
-  # Coverage of p10
-  HuraultMisc::plot_coverage(rstan::extract(fit_fake, pars = "p10")[[1]],
-                             tmp[tmp[["Variable"]] == "p10", "True"])
-
-  PPC_group_distribution(fit_fake, "p10", 20) + coord_cartesian(xlim = c(0, 1))
-
-  # Coverage of y_lat
-  HuraultMisc::plot_coverage(rstan::extract(fit_fake, pars = "y_lat")[[1]],
-                             tmp[tmp[["Variable"]] == "y_lat", "True"])
+  if (mdl_name == "BinMC") {
+    # Distribution of p10 (patient-dependent)
+    PPC_group_distribution(fit_fake, "p10", 20) + coord_cartesian(xlim = c(0, 1))
+    # Coverage of p10
+    HuraultMisc::plot_coverage(rstan::extract(fit_fake, pars = "p10")[[1]],
+                               tmp[tmp[["Variable"]] == "p10", "True"])
+  }
 
 }
