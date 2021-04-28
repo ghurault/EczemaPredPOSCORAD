@@ -156,7 +156,7 @@ if (run) {
                     refresh = 0)
 
       perf <- test %>%
-        add_predictions(test = ., fit = fit, discrete = TRUE, include_samples = TRUE) %>%
+        add_predictions(fit = fit, discrete = TRUE, include_samples = TRUE) %>%
         mutate(Samples = map(Samples, ~(.x - 1))) # -1 to be between 0 and max_score
 
     }
@@ -175,7 +175,7 @@ if (run) {
                               refresh  = 0)
 
         perf <- test %>%
-          add_predictions(test = ., fit = fit, discrete = FALSE, include_samples = TRUE)
+          add_predictions(fit = fit, discrete = FALSE, include_samples = TRUE)
       } else {
         fit <- fit_discrete(train = mutate(train, Score = round(Score / reso)),
                             test = mutate(test, Score = round(Score / reso)),
@@ -188,7 +188,7 @@ if (run) {
                             refresh = 0)
 
         perf <- test %>%
-          add_predictions(test = ., fit = fit, discrete = TRUE, include_samples = TRUE) %>%
+          add_predictions(fit = fit, discrete = TRUE, include_samples = TRUE) %>%
           mutate(Samples = map(Samples, ~(.x * reso)))
       }
     }
