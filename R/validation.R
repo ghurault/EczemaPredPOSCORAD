@@ -182,7 +182,8 @@ estimate_performance <- function(metric_name, df, fc_it, adjust_horizon = TRUE) 
 #' Plot learning curves
 #'
 #' @param perf Dataframe of performance estimate
-#' @param metric (optional) name of the metric to plot to set the scale and label
+#' @param metric (optional) name of the metric to plot to set the scale and label.
+#' When `metric = "lpd"`, the x-axis is labelled in the context of a discrete forecast.
 #' @param fc_it (optional) Dataframe output from `detail_fw_training` to make a secondary x axis
 #'
 #' @return Ggplot
@@ -218,18 +219,20 @@ plot_learning_curves <- function(perf, metric = NULL, fc_it = NULL) {
                                              name = "Training day"))
   }
 
-  if (metric == "lpd") {
-    brk <- c(.01, .05, .1, .25, .5, .75, 1)
-    p1 <- p1 +
-      scale_y_continuous(breaks = log(brk), labels = paste0("log(", brk, ")")) +
-      coord_cartesian(ylim = c(NA, 0))
-  } else if (metric %in% c("RPS", "CRPS", "QE")) {
-    p1 <- p1 +
-      coord_cartesian(ylim = c(0, NA))
-  } else if (metric == "Accuracy") {
-    p1 <- p1 +
-      scale_y_continuous(breaks = seq(0, 1, .1), expand = c(0, 0)) +
-      coord_cartesian(ylim = c(0, 1))
+  if (!is.null(metric)) {
+    if (metric == "lpd") {
+      brk <- c(.01, .05, .1, .25, .5, .75, 1)
+      p1 <- p1 +
+        scale_y_continuous(breaks = log(brk), labels = paste0("log(", brk, ")")) +
+        coord_cartesian(ylim = c(NA, 0))
+    } else if (metric %in% c("RPS", "CRPS", "QE")) {
+      p1 <- p1 +
+        coord_cartesian(ylim = c(0, NA))
+    } else if (metric == "Accuracy") {
+      p1 <- p1 +
+        scale_y_continuous(breaks = seq(0, 1, .1), expand = c(0, 0)) +
+        coord_cartesian(ylim = c(0, 1))
+    }
   }
 
   return(p1)

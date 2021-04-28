@@ -110,7 +110,7 @@ pl <- lapply(metrics,
                p1 <- perf %>%
                  filter(Variable == "Fit",
                         Horizon == params$pred_horizon) %>%
-                 plot_learning_curves(perf = ., metric = metric, fc_it = fc_it)
+                 plot_learning_curves(perf = ., metric = ifelse(score %in% c("SCORAD", "oSCORAD"), "", metric), fc_it = fc_it)
                
                p2 <- perf %>%
                  filter(Variable == "Horizon") %>%
