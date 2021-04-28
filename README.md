@@ -19,7 +19,7 @@ devtools::install_github("ghurault/EczemaPredPOSCORAD", dependencies = TRUE)`
 
 This project notably depends on three packages:
 
-- [EczemaPred](https://github.com/ghurault/EczemaPred), [version **TBC**](), which contains the different Stan models, including the reference models.
+- [EczemaPred](https://github.com/ghurault/EczemaPred), which contains the different Stan models, including the reference models.
 - [HuraultMisc](https://github.com/ghurault/HuraultMisc), my personal package containing various data analysis functions.
 - TanakaData, a proprietary package containing loading the datasets used in this study, but unavailable due to our data sharing agreement (**TBC**). This package includes the raw files as well as data processing functions.
 
@@ -30,6 +30,7 @@ library(EczemaPredPOSCORAD)
 help(package = "EczemaPredPOSCORAD")
 ```
 
+The analysis was performed with [EczemaPred version **TBC**]() and [HuraultMisc version **TBC**]().
 The analysis code is located in the [`analysis/`](analysis/) directory:
 
 - [`01_check_models.R`](analysis/01_check_models.R) : Conduct prior predictive checks and fake data check of the severity item models and the PO-SCORAD models.
