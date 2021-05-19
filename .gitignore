@@ -38,5 +38,6 @@ rsconnect/
 # Custom
 README.html
 results/*
+results
 docs/*
 analysis/*.html
