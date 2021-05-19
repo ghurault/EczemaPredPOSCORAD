@@ -110,7 +110,10 @@ pl <- lapply(metrics,
                p1 <- perf %>%
                  filter(Variable == "Fit",
                         Horizon == params$pred_horizon) %>%
-                 plot_learning_curves(perf = ., metric = ifelse(score %in% c("SCORAD", "oSCORAD"), "", metric), fc_it = fc_it)
+                 plot_learning_curves(perf = .,
+                                      metric = ifelse(metric == "lpd" && score %in% c("SCORAD", "oSCORAD"), "", metric),
+                                      fc_it = fc_it) +
+                 labs(y = metric)
                
                p2 <- perf %>%
                  filter(Variable == "Horizon") %>%
@@ -151,7 +154,7 @@ res <- lapply(1:length(mdl_names),
 
 # lpd_diff vs training iteration
 # alternative to meta-model: no need to control for prediction horizon or patient with non-constant forecast
-brk <- c(.01, .1, .5, 1, 2, 10, 100)
+brk <- c(.01, .1, .5, .67, 1, 1.5, 2, 10, 100)
 p3 <- res %>%
   filter(!(Model %in% c("uniform", "historical"))) %>%
   compute_skill_scores(., ref_mdl = comp_mdl, metrics = "lpd") %>%
@@ -159,6 +162,7 @@ p3 <- res %>%
          abs(lpd_diff) < Inf) %>%
   group_by(Model, Iteration) %>%
   summarise(Mean = mean(lpd_diff), SD = sd(lpd_diff), SE = SD / sqrt(n())) %>%
+  ungroup() %>%
   drop_na() %>%
   left_join(., fc_it, by = "Iteration") %>%
   plot_learning_curves(perf = ., metric = paste0("lpd - lpd(", comp_mdl, ")"), fc_it = fc_it) +
@@ -172,7 +176,8 @@ p4 <- res %>%
   filter(Horizon <= params$max_horizon,
          abs(lpd_diff) < Inf,
          Iteration > 0) %>%
-  plot_perf_vs_score(perf = ., metric = "lpd_diff", discrete = (score %in% intensity_signs), max_score = max_score)
+  plot_perf_vs_score(perf = ., metric = "lpd_diff", discrete = (score %in% intensity_signs), max_score = max_score) +
+  scale_y_continuous(breaks = log(brk), labels = paste0("log(", brk, ")"))
 # p4
 
 
