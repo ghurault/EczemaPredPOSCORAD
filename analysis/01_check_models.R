@@ -41,15 +41,20 @@ stopifnot(is_scalar_wholenumber(n_pt),
           is_scalar_wholenumber(n_it),
           n_it > 0)
 
-max_score <- case_when(score == "subjective" ~ 10,
-                       score == "intensity" ~ 3,
-                       TRUE ~ detail_POSCORAD(score)$Maximum)
+max_score <- case_when(score == "subjective" ~ "itching",
+                       score == "intensity" ~ "dryness",
+                       TRUE ~ score) %>%
+  detail_POSCORAD() %>%
+  pull(Maximum)
 reso <- case_when(score %in% c("extent", "intensity", "B", "oSCORAD", "SCORAD") ~ 1,
                   score %in% c("subjective", "C") ~ 0.1)
+M <- round(max_score / reso)
 
 file_dict <- get_results_files(outcome = score, model = mdl_name)
 
-param <- list_parameters(mdl_name)
+model <- EczemaModel(mdl_name, max_score = M, discrete = !is_continuous)
+
+param <- list_parameters(model)
 param$Test <- NULL
 
 # Prior predictive check -------------------------------------------------
@@ -57,23 +62,12 @@ param$Test <- NULL
 id <- get_index2(n_dur)
 
 if (run_prior) {
-  if (is_continuous) {
-    fit_prior <- sample_prior_continuous(N_patient = n_pt,
-                                         t_max = n_dur,
-                                         max_score = max_score,
-                                         model = mdl_name,
-                                         pars = unlist(param),
-                                         iter = n_it,
-                                         chains = n_chains)
-  } else {
-    fit_prior <- sample_prior_discrete(N_patient = n_pt,
-                                       t_max = n_dur,
-                                       max_score = round(max_score / reso),
-                                       model = mdl_name,
-                                       pars = unlist(param),
-                                       iter = n_it,
-                                       chains = n_chains)
-  }
+  fit_prior <- sample_prior(model,
+                            N_patient = n_pt,
+                            t_max = n_dur,
+                            pars = unlist(param),
+                            iter = n_it,
+                            chains = n_chains)
   saveRDS(fit_prior, file = file_dict$PriorFit)
   par0 <- extract_parameters(fit_prior, pars = param, id = id)
   saveRDS(par0, file = file_dict$PriorPar)
@@ -137,7 +131,9 @@ horizon <- 5
 ###
 
 l <- extract_simulations(fit_prior, id = id, draw = draw, pars = unlist(param[c("Population", "Patient")]))
-fd <- l$Data %>% select(-Index)
+fd <- l$Data %>%
+  select(-Index) %>%
+  mutate(Score = Score * reso)
 
 # Add missing values (but not at the beginning and end of the time-series)
 fd <- lapply(1:n_pt,
@@ -185,24 +181,19 @@ fd <- left_join(fd, id, by = c("Patient", "Time"))
 
 if (run_fake) {
   if (is_continuous) {
-    fit_fake <- fit_continuous(train = train,
-                               test = test,
-                               max_score = max_score,
-                               model = mdl_name,
-                               pars = unlist(param),
-                               iter = n_it,
-                               chains = n_chains,
-                               control = list(adapt_delta = 0.9))
+    train_tmp <- train
+    test_tmp <- test
   } else {
-    fit_fake <- fit_discrete(train = train %>% mutate(Score = round(Score / reso)),
-                             test = test %>% mutate(Score = round(Score / reso)),
-                             max_score = round(max_score / reso),
-                             model = mdl_name,
-                             pars = unlist(param),
-                             iter = n_it,
-                             chains = n_chains,
-                             control = list(adapt_delta = 0.9))
+    train_tmp <- train %>% mutate(Score = round(Score / reso))
+    test_tmp <- test %>% mutate(Score = round(Score / reso))
   }
+  fit_fake <- EczemaFit(model,
+                        train = train_tmp,
+                        test = test_tmp,
+                        pars = unlist(param),
+                        iter = n_it,
+                        chains = n_chains,
+                        control = list(adapt_delta = 0.9))
   saveRDS(fit_fake, file = file_dict$FakeFit)
 } else {
   fit_fake <- readRDS(file_dict$FakeFit)

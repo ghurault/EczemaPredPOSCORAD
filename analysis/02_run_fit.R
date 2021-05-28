@@ -21,7 +21,7 @@ source(here::here("analysis", "00_init.R"))
 mdl_name <- "BinMC"
 score <- "extent"
 dataset <- "PFDC"
-run <- TRUE
+run <- FALSE
 n_chains <- 4
 n_it <- 2000
 ####
@@ -41,7 +41,9 @@ is_continuous <- (score %in% c("SCORAD", "oSCORAD"))
 item_dict <- item_dict %>% filter(Name == score)
 item_lbl <- as.character(item_dict[["Label"]])
 max_score <- item_dict[["Maximum"]]
-reso <- item_dict[["Resolution"]]
+reso <- case_when(is_continuous ~ 1,
+                  TRUE ~ item_dict[["Resolution"]])
+M <- round(max_score / reso)
 
 file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset)
 
@@ -79,38 +81,35 @@ if (run) {
       select(y0, y1, dt) %>%
       drop_na()
 
-    fit <- fit_MC(train = df_MC,
-                  K = max_score + 1,
-                  pars = unlist(param),
-                  iter = n_it,
-                  chains = n_chains,
-                  init = 0)
+    model <- EczemaModel("MC", K = max_score + 1)
+    fit <- EczemaFit(model,
+                     train = df_MC,
+                     pars = unlist(param),
+                     iter = n_it,
+                     chains = n_chains,
+                     init = 0)
 
     id <- NULL
 
-  } else if (is_continuous) {
-
-    fit <- fit_continuous(train = df,
-                          max_score = max_score,
-                          model = mdl_name,
-                          pars = unlist(param),
-                          iter = n_it,
-                          chains = n_chains,
-                          control = list(adapt_delta = .9))
-
   } else {
 
-    fit <- fit_discrete(train = df %>% mutate(Score = round(Score / reso)),
-                        max_score = round(max_score / reso),
-                        model = mdl_name,
-                        pars = unlist(param),
-                        iter = n_it,
-                        chains = n_chains,
-                        control = list(adapt_delta = .9))
+    if (is_continuous) {
+      train_tmp <- df
+    } else {
+      train_tmp <- df %>% mutate(Score = round(Score / reso))
+    }
+
+    model <- EczemaModel(mdl_name, max_score = M, discrete = !is_continuous)
+    fit <- EczemaFit(model,
+                     train = train_tmp,
+                     pars = unlist(param),
+                     iter = n_it,
+                     chains = n_chains,
+                     control = list(adapt_delta = .9))
 
   }
 
-  saveRDS(fit, file = file_dict$Fit)
+  saveRDS(fit, file = here(file_dict$Fit))
   par <- extract_parameters(fit, pars = param, id = id)
-  saveRDS(par, file = file_dict$FitPar)
+  saveRDS(par, file = here(file_dict$FitPar))
 }
