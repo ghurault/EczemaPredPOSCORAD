@@ -4,7 +4,13 @@
 \alias{get_results_files}
 \title{Dictionary of results files}
 \usage{
-get_results_files(outcome, model, dataset = NULL, val_horizon = NULL)
+get_results_files(
+  outcome,
+  model,
+  dataset = NULL,
+  val_horizon = NULL,
+  root_dir = "."
+)
 }
 \arguments{
 \item{outcome}{item/score to predict}
@@ -14,6 +20,8 @@ get_results_files(outcome, model, dataset = NULL, val_horizon = NULL)
 \item{dataset}{dataset name}
 
 \item{val_horizon}{validation horizon}
+
+\item{root_dir}{Root directory. Default to working directory. It can be interesting to set this to \code{here::here()}.}
 }
 \value{
 Named list:

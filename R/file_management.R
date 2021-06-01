@@ -43,6 +43,7 @@ get_validation_files <- function(outcome, model, dataset, val_horizon) {
 #' @param model model name
 #' @param dataset dataset name
 #' @param val_horizon validation horizon
+#' @param root_dir Root directory. Default to working directory. It can be interesting to set this to `here::here()`.
 #'
 #' @return Named list:
 #' - Prior: Stanfit object of prior predictive distribution
@@ -57,7 +58,7 @@ get_validation_files <- function(outcome, model, dataset, val_horizon) {
 #'
 #' @export
 #' @import rlang HuraultMisc
-get_results_files <- function(outcome, model, dataset = NULL, val_horizon = NULL) {
+get_results_files <- function(outcome, model, dataset = NULL, val_horizon = NULL, root_dir = ".") {
 
   stopifnot(is_scalar_character(outcome),
             is_scalar_character(model))
@@ -80,6 +81,8 @@ get_results_files <- function(outcome, model, dataset = NULL, val_horizon = NULL
       out <- c(out, get_validation_files(outcome, model, dataset, val_horizon))
     }
   }
+
+  out <- lapply(out, function(x) {file.path(root_dir, x)})
 
   return(out)
 }
