@@ -44,10 +44,13 @@ compute_accuracy <- function(y, pred, ct) {
             is_scalar_double(ct),
             ct > 0)
 
-  sapply(1:length(y),
-         function(i) {
-           mean(abs(y[i] - pred[[i]]) <= ct)
-         })
+  vapply(
+    seq_along(y),
+    function(i) {
+      mean(abs(y[i] - pred[[i]]) <= ct)
+    },
+    numeric(1)
+  )
 }
 
 #' @rdname custom_metrics
@@ -61,10 +64,13 @@ compute_quantile_error <- function(y, pred, p) {
             is_scalar_double(p),
             p > 0 & p < 1)
 
-  sapply(1:length(y),
+  vapply(
+    seq_along(y),
          function(i) {
            as.numeric(stats::quantile(abs(y[i] - pred[[i]]), probs = p))
-         })
+         },
+    numeric(1)
+    )
 }
 
 #' Compute skill scores
