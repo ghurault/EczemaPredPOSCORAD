@@ -24,14 +24,14 @@ list_models <- bind_rows(mdl_A, mdl_B, mdl_C) %>%
 
 l_prior <- list_models %>%
   mutate(Distribution = "Prior",
-         File = map2(Item, Model, ~get_results_files(outcome = .x, model = .y)$PriorPar) %>% unlist())
+         File = map2(Item, Model, ~get_results_files(outcome = .x, model = .y, root_dir = here())$PriorPar) %>% unlist())
 
 l_post <- list_models %>%
   expand_grid(., Dataset = datasets) %>%
   mutate(Distribution = paste0("Posterior - ", Dataset),
          File = pmap(list(Item, Model, Dataset),
                      function(x, y, z) {
-                       get_results_files(outcome = x, model = y, dataset = z)$FitPar
+                       get_results_files(outcome = x, model = y, dataset = z, root_dir = here())$FitPar
                      }) %>%
            unlist()) %>%
   select(-Dataset)

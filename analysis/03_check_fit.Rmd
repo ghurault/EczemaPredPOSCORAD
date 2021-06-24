@@ -53,11 +53,11 @@ df <- left_join(df, id, by = c("Patient", "Time"))
 
 ```{r load-results}
 # Results
-file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset)
-fit <- readRDS(here::here(file_dict$Fit))
-par <- readRDS(here::here(file_dict$FitPar))
+file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset, root_dir = here())
+fit <- readRDS(file_dict$Fit)
+par <- readRDS(file_dict$FitPar)
 if (mdl_name != "MC") {
-  par0 <- readRDS(here::here(file_dict$PriorPar))
+  par0 <- readRDS(file_dict$PriorPar)
 }
 ```
 

@@ -36,15 +36,21 @@ score <- match.arg(score, dict[["Name"]])
 dict <- dict %>% filter(Name == all_of(score))
 score_lbl <- dict[["Label"]]
 
-mdl_scorad[["File"]] <- sapply(1:nrow(mdl_scorad),
+mdl_scorad[["File"]] <- vapply(1:nrow(mdl_scorad),
                                function(i) {
                                  get_results_files(outcome = mdl_scorad$Item[i],
                                                    model = mdl_scorad$Model[i],
                                                    dataset = dataset,
-                                                   val_horizon = t_horizon)$Val
-                                 })
+                                                   val_horizon = t_horizon,
+                                                   root_dir = here())$Val
+                                 },
+                               character(1))
 stopifnot(all(file.exists(mdl_scorad[["File"]])))
-res_file <- get_results_files(outcome = score, model = mdl_name, dataset = dataset, val_horizon = t_horizon)$Val
+res_file <- get_results_files(outcome = score,
+                              model = mdl_name,
+                              dataset = dataset,
+                              val_horizon = t_horizon,
+                              root_dir = here())$Val
 
 max_score <- dict[["Maximum"]]
 
@@ -161,7 +167,7 @@ if (score %in% c("SCORAD", "oSCORAD")) {
 
 # Save results
 if (sv) {
-  saveRDS(res, file = here(res_file))
+  saveRDS(res, file = res_file)
 }
 
 # Where does the variance in SCORAD comes from? ----------------------------

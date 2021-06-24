@@ -45,7 +45,7 @@ reso <- case_when(is_continuous ~ 1,
                   TRUE ~ item_dict[["Resolution"]])
 M <- round(max_score / reso)
 
-file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset)
+file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset, root_dir = here())
 
 param <- list_parameters(mdl_name)
 param[c("Test", "Misc")] <- NULL
@@ -109,7 +109,7 @@ if (run) {
 
   }
 
-  saveRDS(fit, file = here(file_dict$Fit))
+  saveRDS(fit, file = file_dict$Fit)
   par <- extract_parameters(fit, pars = param, id = id)
-  saveRDS(par, file = here(file_dict$FitPar))
+  saveRDS(par, file = file_dict$FitPar)
 }

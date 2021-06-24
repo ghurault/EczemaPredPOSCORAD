@@ -50,7 +50,7 @@ reso <- case_when(score %in% c("extent", "intensity", "B", "oSCORAD", "SCORAD") 
                   score %in% c("subjective", "C") ~ 0.1)
 M <- round(max_score / reso)
 
-file_dict <- get_results_files(outcome = score, model = mdl_name)
+file_dict <- get_results_files(outcome = score, model = mdl_name, root_dir = here())
 
 model <- EczemaModel(mdl_name, max_score = M, discrete = !is_continuous)
 

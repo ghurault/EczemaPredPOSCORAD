@@ -47,7 +47,11 @@ reso <- case_when(is_continuous ~ 1,
                   TRUE ~ item_dict[["Resolution"]])
 M <- round(max_score / reso)
 
-file_dict <- get_results_files(outcome = score, model = mdl_name, dataset = dataset, val_horizon = t_horizon)
+file_dict <- get_results_files(outcome = score,
+                               model = mdl_name,
+                               dataset = dataset,
+                               val_horizon = t_horizon,
+                               root_dir = here())
 
 if (is_continuous) {
   param <- c("lpd", "y_pred")
@@ -75,11 +79,10 @@ train_it <- get_fc_training_iteration(df[["Iteration"]])
 
 if (run) {
 
-  duration <- Sys.time()
   cl <- makeCluster(n_cluster, outfile = "")
   registerDoParallel(cl)
 
-  dir.create(here(file_dict$ValDir))
+  dir.create(file_dict$ValDir)
 
   out <- foreach(i = rev(seq_along(train_it))) %dopar% {
     it <- train_it[i]
@@ -208,6 +211,6 @@ if (run) {
                   readRDS(here(f))
                 }) %>%
     bind_rows()
-  saveRDS(res, file = here(file_dict$Val))
+  saveRDS(res, file = file_dict$Val)
 
 }

@@ -27,7 +27,11 @@ mdl_name <- match.arg(mdl_name, c("EczemaPred", "Smoothing", "RW", "AR1", "Mixed
 
 max_score <- detail_POSCORAD(score)$Maximum
 
-res_file <- get_results_files(outcome = score, model = mdl_name, dataset = dataset, val_horizon = t_horizon)$Val %>% here()
+res_file <- get_results_files(outcome = score,
+                              model = mdl_name,
+                              dataset = dataset,
+                              val_horizon = t_horizon,
+                              root_dir = here())$Val
 stopifnot(file.exists(res_file))
 
 # Processing --------------------------------------------------------------

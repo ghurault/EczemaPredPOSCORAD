@@ -42,14 +42,15 @@ list_models <- bind_rows(
   expand_grid(.,
               data.frame(Dataset = datasets))
 
-list_models[["File"]] <- sapply(1:nrow(list_models),
+list_models[["File"]] <- vapply(1:nrow(list_models),
                                 function(i) {
                                   get_results_files(outcome = list_models$Item[i],
                                                     model = list_models$Model[i],
                                                     dataset = list_models$Dataset[i],
-                                                    val_horizon = t_horizon)$Val
-                                }) %>%
-  here()
+                                                    val_horizon = t_horizon,
+                                                    root_dir = here())$Val
+                                },
+                                character(1))
 stopifnot(all(file.exists(list_models$File)))
 
 # Processing --------------------------------------------------------------

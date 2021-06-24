@@ -57,10 +57,15 @@ if (score == "extent") {
   comp_mdl <- "RW"
 }
 
-res_files <- sapply(mdl_names,
+res_files <- vapply(mdl_names,
                     function(m) {
-                      here(get_results_files(outcome = score, model = m, dataset = dataset, val_horizon = params$t_horizon)$Val)
-                    })
+                      get_results_files(outcome = score,
+                                        model = m,
+                                        dataset = dataset,
+                                        val_horizon = params$t_horizon,
+                                        root_dir = here())$Val
+                    },
+                    character(1))
 
 stopifnot(params$t_horizon > 0,
           params$pred_horizon > 0,
