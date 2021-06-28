@@ -20,8 +20,10 @@ available_models() %>%
     expand_grid(Dataset = c("Derexyl", "PFDC")) %>%
   mutate(Model = factor(Model, levels = unique(Model))) %>%
   arrange(Model) %>%
-  mutate(File = file.path("..", "docs", paste0("fit_", Score, "_", Model, "_", Dataset, ".html")),
-         File = paste0("[", Dataset, "](", File, ")")) %>%
+  mutate(Link = file.path("..", "docs", paste0("fit_", Score, "_", Model, "_", Dataset, ".html")),
+         File = paste0("[", Dataset, "](", Link, ")")) %>%
+  filter(file.exists(Link)) %>%
+  select(-Link) %>%
   group_by(Model, Score) %>%
   summarise(File = paste0(File, collapse = " - ")) %>%
   pivot_wider(names_from = "Model", values_from = "File") %>%
@@ -38,8 +40,10 @@ available_models() %>%
 ```{r validation-table, results='asis', echo=FALSE}
 expand_grid(Score = detail_POSCORAD()$Name,
             Dataset = c("Derexyl", "PFDC")) %>%
-  mutate(File = file.path("..", "docs", paste0("perf4_", Score, "_", Dataset, ".html")),
-         File = paste0("[link](", File, ")")) %>%
+  mutate(Link = file.path("..", "docs", paste0("perf4_", Score, "_", Dataset, ".html")),
+         File = paste0("[link](", Link, ")")) %>%
+  filter(file.exists(Link)) %>%
+  select(-Link) %>%
   pivot_wider(names_from = "Dataset", values_from = "File") %>%
   knitr::kable()
 ```
