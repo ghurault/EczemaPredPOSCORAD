@@ -40,6 +40,10 @@ render_parallel <- function(input, rpt, ...) {
     NULL
   }
 
+  stopCluster(cl)
+
+  NULL
+
 }
 
 # Fit ---------------------------------------------------------------------
