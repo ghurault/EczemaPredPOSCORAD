@@ -203,13 +203,19 @@ plot_learning_curves <- function(perf, metric = NULL, fc_it = NULL) {
 
   mdl_names <- intersect(levels(perf[["Model"]]), unique(perf[["Model"]]))
 
+  palette <- rev(HuraultMisc::cbbPalette[1:length(mdl_names)])
+  if (length(mdl_names) > 8) {
+    warning("There are more models than colour in the palette.
+            You can provide another palette with `scale_colour_manual()` and `scale_fill_manual()`.")
+  }
+
   p1 <- ggplot(data = perf,
                aes(x = N, y = Mean, ymin = Mean - SE, ymax = Mean + SE, colour = Model, fill = Model)) +
     geom_point() +
     geom_line() +
     geom_ribbon(alpha = 0.5) +
-    scale_colour_manual(values = rev(HuraultMisc::cbbPalette[1:length(mdl_names)]), guide = guide_legend(reverse = TRUE)) +
-    scale_fill_manual(values = rev(HuraultMisc::cbbPalette[1:length(mdl_names)]), guide = guide_legend(reverse = TRUE)) +
+    scale_colour_manual(values = palette, guide = guide_legend(reverse = TRUE)) +
+    scale_fill_manual(values = palette, guide = guide_legend(reverse = TRUE)) +
     labs(x = "Number of observations", y = metric, colour = "", fill = "") +
     theme_bw(base_size = 15) +
     theme(panel.grid.minor.y = element_blank(),
@@ -261,10 +267,16 @@ plot_horizon_change <- function(perf) {
 
   mdl_names <- levels(perf[["Model"]])
 
+  palette <- rev(HuraultMisc::cbbPalette[1:length(mdl_names)])
+  if (length(mdl_names) > 8) {
+    warning("There are more models than colour in the palette.
+            You can provide another palette with `scale_colour_manual()`.")
+  }
+
   p2 <- ggplot(data = perf,
                aes(x = Model, y = Mean, ymin = Mean - SE, ymax = Mean + SE, colour = Model)) +
     geom_pointrange(size = 1.5) +
-    scale_colour_manual(values = rev(HuraultMisc::cbbPalette[1:length(mdl_names)])) +
+    scale_colour_manual(values = palette) +
     labs(x = "", y = "Performance change with\nincreasing prediction horizon", colour = "") +
     theme_bw(base_size = 15) +
     theme(legend.position = "bottom",
@@ -296,6 +308,12 @@ plot_perf_vs_score <- function(perf, metric = "lpd_diff", discrete = FALSE, max_
             is.na(max_score) | is.numeric(max_score))
 
   mdl_names <- intersect(levels(perf[["Model"]]), unique(perf[["Model"]]))
+
+  palette <- rev(HuraultMisc::cbbPalette[1:length(mdl_names)])
+  if (length(mdl_names) > 8) {
+    warning("There are more models than colour in the palette.
+            You can provide another palette with `scale_colour_manual()` and `scale_fill_manual()`.")
+  }
 
   # Data
   preds <- perf %>%
@@ -343,8 +361,8 @@ plot_perf_vs_score <- function(perf, metric = "lpd_diff", discrete = FALSE, max_
                                              name = "Cumulative proportion of observations"))
   }
   p4 <- p4 +
-    scale_colour_manual(values = rev(HuraultMisc::cbbPalette[1:length(mdl_names)]), guide = guide_legend(reverse = TRUE)) +
-    scale_fill_manual(values = rev(HuraultMisc::cbbPalette[1:length(mdl_names)]), guide = guide_legend(reverse = TRUE)) +
+    scale_colour_manual(values = palette, guide = guide_legend(reverse = TRUE)) +
+    scale_fill_manual(values = palette, guide = guide_legend(reverse = TRUE)) +
     labs(y = metric, colour = "", fill = "") +
     theme_bw(base_size = 15) +
     theme(panel.grid.minor.y = element_blank(),
