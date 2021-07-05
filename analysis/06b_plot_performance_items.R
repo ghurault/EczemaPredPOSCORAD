@@ -146,7 +146,9 @@ for (severity_item in unique(list_models[["Item"]])) {
 
                   df <- load_dataset(dataset)
                   fc_it <- detail_fc_training(df %>% rename(Time = Day), t_horizon)
-                  id_xbrk2 <- sapply(seq(0, 1, length.out = 10), function(x) {which.min((x - fc_it$Proportion)^2)})
+                  id_xbrk2 <- vapply(seq(0, 1, length.out = 10),
+                                     function(x) {which.min((x - fc_it$Proportion)^2)},
+                                     numeric(1))
 
                   title <- case_when(dataset == "Derexyl" ~ "Dataset 1",
                                      dataset == "PFDC" ~ "Dataset 2")

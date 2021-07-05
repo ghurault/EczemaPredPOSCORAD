@@ -129,14 +129,16 @@ compute_discrete_metrics_from_samples <- function(res, max_score, reso = 1) {
                          function(i) {
                            HuraultMisc::extract_distribution(c(support, res$Samples[i][[1]]), type = "discrete", support = support)$Probability
                          }))
-  lpd <- sapply(1:nrow(prob),
+  lpd <- vapply(1:nrow(prob),
                 function(i) {
                   log(prob[i, as.integer(res$Score[i] / reso) + 1])
-                })
-  RPS <- sapply(1:nrow(prob),
+                },
+                numeric(1))
+  RPS <- vapply(1:nrow(prob),
                 function(i) {
                   compute_RPS(prob[i, ], as.integer(res$Score[i] / reso) + 1)
-                })
+                },
+                numeric(1))
   res <- res %>%
     mutate(lpd = lpd,
            RPS = RPS)
@@ -177,7 +179,7 @@ if (FALSE) {
   intensity_signs <- detail_POSCORAD("Intensity signs")$Name
 
   prop <- pred %>%
-    mutate(across(ends_with("_pred"), ~sapply(.x, var))) %>%
+    mutate(across(ends_with("_pred"), ~vapply(.x, var, numeric(1)))) %>%
     mutate(across(all_of(paste0(c(intensity_signs, "B"), "_pred")), ~(.x * 3.5^2))) %>%
     mutate(extent_pred = extent_pred * 0.2^2) %>%
     mutate(across(ends_with("_pred"), ~(.x / SCORAD_pred))) %>%

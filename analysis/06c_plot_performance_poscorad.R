@@ -77,7 +77,9 @@ pl <- lapply(1:nrow(it),
                df <- load_dataset(as.character(it$Dataset[dm]))
                fc_it <- detail_fc_training(df %>% rename(Time = Day), t_horizon)
 
-               id_xbrk2 <- sapply(seq(0, 1, length.out = 10), function(x) {which.min((x - fc_it$Proportion)^2)})
+               id_xbrk2 <- vapply(seq(0, 1, length.out = 10),
+                                  function(x) {which.min((x - fc_it$Proportion)^2)},
+                                  numeric(1))
 
                tmp <- left_join(it[dm, ], list_models, by = c("Dataset", "Metric"))
                metric <- it$Metric[dm]

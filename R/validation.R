@@ -39,7 +39,7 @@ compute_accuracy <- function(y, pred, ct) {
 
   stopifnot(is.vector(y, mode = "numeric"),
             is.list(pred),
-            all(sapply(pred, function(x) {is.vector(x, mode = "numeric")})),
+            all(vapply(pred, function(x) {is.vector(x, mode = "numeric")}, logical(1))),
             length(y) == length(pred),
             is_scalar_double(ct),
             ct > 0)
@@ -59,7 +59,7 @@ compute_quantile_error <- function(y, pred, p) {
 
   stopifnot(is.vector(y, mode = "numeric"),
             is.list(pred),
-            all(sapply(pred, function(x) {is.vector(x, mode = "numeric")})),
+            all(vapply(pred, function(x) {is.vector(x, mode = "numeric")}, logical(1))),
             length(y) == length(pred),
             is_scalar_double(p),
             p > 0 & p < 1)
@@ -218,7 +218,7 @@ plot_learning_curves <- function(perf, metric = NULL, fc_it = NULL) {
   if (!is.null(fc_it)) {
     stopifnot(is.data.frame(fc_it),
               all(c("N", "LastTime", "Proportion") %in% colnames(fc_it)))
-    id_xbrk2 <- sapply(seq(0, 1, length.out = 10), function(x) {which.min((x - fc_it$Proportion)^2)})
+    id_xbrk2 <- vapply(seq(0, 1, length.out = 10), function(x) {which.min((x - fc_it$Proportion)^2)}, numeric(1))
     p1 <- p1 +
       scale_x_continuous(sec.axis = dup_axis(breaks =  fc_it$N[id_xbrk2],
                                              labels = fc_it$LastTime[id_xbrk2],
