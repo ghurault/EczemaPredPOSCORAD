@@ -25,7 +25,7 @@ n_cluster <- 2
 
 item_dict <- detail_POSCORAD()
 score <- match.arg(score, item_dict[["Name"]])
-dataset <- match.arg(dataset, c("Derexyl", "PFDC"))
+dataset <- match.arg(dataset, c("Derexyl", "PFDC", "Fake"))
 mdl_name <- match.arg(mdl_name, c("uniform", "historical", available_models(score)$Model))
 stopifnot(is_scalar_logical(run),
           is_scalar_wholenumber(n_chains),

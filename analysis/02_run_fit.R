@@ -29,7 +29,7 @@ n_it <- 2000
 item_dict <- detail_POSCORAD()
 score <- match.arg(score, item_dict[["Name"]])
 intensity_signs <- detail_POSCORAD("Intensity signs")$Name
-dataset <- match.arg(dataset, c("Derexyl", "PFDC"))
+dataset <- match.arg(dataset, c("Derexyl", "PFDC", "Fake"))
 mdl_name <- match.arg(mdl_name, available_models(score)$Model)
 stopifnot(is_scalar_logical(run),
           is_scalar_wholenumber(n_chains),

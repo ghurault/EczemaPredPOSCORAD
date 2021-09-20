@@ -18,14 +18,14 @@ options(mc.cores = parallel::detectCores()) # Parallel computing
 #' - Remove patients with less than x=5 observations
 #' - Regenerate patient ID (BEWARE for comparisons with other datasets!)
 #'
-#' This function requires the proprietary package `TanakaData`
+#' This function requires the proprietary package `TanakaData`, except when `dataset = "Fake"`.
 #'
 #' @param dataset Name of the dataset
 #'
 #' @return
 #'
 #' @import dplyr
-load_dataset <- function(dataset = c("Derexyl", "PFDC")) {
+load_dataset <- function(dataset = c("Derexyl", "PFDC", "Fake")) {
 
   dataset <- match.arg(dataset)
 
@@ -35,6 +35,10 @@ load_dataset <- function(dataset = c("Derexyl", "PFDC")) {
   if (dataset == "PFDC") {
     out <- TanakaData::POSCORAD_PFDC
   }
+  if (dataset == "Fake") {
+    out <- EczemaPredPOSCORAD::FakeData$Data
+  }
+
   out <- out %>%
     group_by(Patient) %>%
     filter(n() >= 5) %>%

@@ -7,7 +7,7 @@ This repository contains the code developed for [**TBC**](#)
 
 The code is written in the R language for statistical computing and the probabilistic programming language [Stan](https://mc-stan.org/) for the models.
 
-## File structure
+## Reproducibility
 
 This repository is organized as an R package/research compendium, providing functions for our analysis.
 Nevertheless, this package has been written explicitly for this project and may not yet be suitable for more general purpose use.
@@ -23,6 +23,15 @@ This project notably depends on three packages:
 - [HuraultMisc](https://github.com/ghurault/HuraultMisc), my personal package containing various data analysis functions.
 - TanakaData, a proprietary package containing loading the datasets used in this study, but unavailable due to our data sharing agreement (**TBC**). This package includes the raw files as well as data processing functions.
 
+The analysis was performed with [EczemaPred v0.1.0](https://github.com/ghurault/EczemaPred/releases/tag/v0.1.0) and [HuraultMisc version v1.1.1](https://github.com/ghurault/HuraultMisc/releases/tag/v1.1.1).
+
+The data is not available at the moment, but fake data similar to what the data has been simulated to check the code.
+The data is generated in [`data-raw/generate_fakedata.R`](data-raw/generate_fakedata.R) and can be loaded with `EczemaPredPOSCORAD::FakeData`, `load_dataset("Fake")` and used in the analysis by setting the script-level parameter `dataset = "Fake"`.
+
+NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
+
+## File structure
+
 Functions specific to this project are located in [`R/`](R/), and can be accessed by loading the package in `R`:
 
 ```{r}
@@ -30,7 +39,6 @@ library(EczemaPredPOSCORAD)
 help(package = "EczemaPredPOSCORAD")
 ```
 
-The analysis was performed with [EczemaPred version **TBC**]() and [HuraultMisc version **TBC**]().
 The analysis code is located in the [`analysis/`](analysis/) directory:
 
 - [`01_check_models.R`](analysis/01_check_models.R) : Conduct prior predictive checks and fake data check of the severity item models and the PO-SCORAD models.
@@ -45,10 +53,10 @@ This script is notably useful to simulate data that is similar to the one we use
 In addition, [`generate_reports.R`](analysis/generate_reports.R) renders reports from [`03_check_fit.Rmd`](analysis/03_check_fit.Rmd) and [`05_check_performance.Rmd`](analysis/05_check_performance.Rmd) for all models and severity items/scores.
 [`view_reports.R`](analysis/view_reports.R) create an HTML document to easily browse these reports.
 
-NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
+Finally, [`data-raw/`](data-raw/) contains the code for the exported data available in [`data/`](data/):
 
-Finally, [`data-raw/`](data-raw/) contains the code for the exported data available in [`data/`](data/).
-Currently, only posterior and prior summary statistics of the EczemaPred models are exported.
+- posterior and prior summary statistics of the EczemaPred models: `EczemaPredPOSCORAD::par_POSCORAD`
+- fake PO-SCORAD dataset: `EczemaPredPOSCORAD::FakeData`
 
 ## License
 

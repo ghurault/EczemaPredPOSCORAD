@@ -22,7 +22,7 @@ item_dict <- detail_POSCORAD()
 intensity_signs <- detail_POSCORAD("Intensity signs")$Name
 score <- match.arg(params$score, item_dict$Name)
 
-dataset <- match.arg(params$dataset, c("Derexyl", "PFDC"))
+dataset <- match.arg(params$dataset, c("Derexyl", "PFDC", "Fake"))
 
 item_dict <- item_dict %>% filter(Name == score)
 item_lbl <- as.character(item_dict[["Label"]])

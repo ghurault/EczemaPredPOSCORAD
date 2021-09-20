@@ -26,7 +26,7 @@ mdl_B <- data.frame(Item = detail_POSCORAD("Intensity signs")$Name, Model = "Ord
 mdl_C <- data.frame(Item = detail_POSCORAD("Subjective symptoms")$Name, Model = "BinRW")
 ####
 
-dataset <- match.arg(dataset, c("Derexyl", "PFDC"))
+dataset <- match.arg(dataset, c("Derexyl", "PFDC", "Fake"))
 
 mdl_scorad <- bind_rows(mdl_A, mdl_B, mdl_C)
 stopifnot(mdl_scorad[["Model"]] %in% c("BinRW", "BinMC", "MC", "RW", "OrderedRW"))

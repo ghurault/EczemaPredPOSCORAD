@@ -33,7 +33,7 @@ source(here::here("analysis", "00_init.R"))
 item_dict <- detail_POSCORAD()
 score <- match.arg(params$score, c(item_dict[["Name"]]))
 intensity_signs <- detail_POSCORAD("Intensity signs")$Name
-dataset <- match.arg(params$dataset, c("Derexyl", "PFDC"))
+dataset <- match.arg(params$dataset, c("Derexyl", "PFDC", "Fake"))
 
 max_score <- item_dict %>% filter(Name == score) %>% pull(Maximum)
 
