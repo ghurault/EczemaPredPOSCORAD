@@ -243,7 +243,7 @@ if (mdl_name == "BinRW") {
   
   pl <- lapply(patient_ids,
                function(pid) {
-                 plot_ppc_traj_fanchart(fit, train = df, test = NULL, patient_id = pid, max_score = max_score) +
+                 plot_ppc_traj_fanchart(yrep, train = df, test = NULL, patient_id = pid, max_score = max_score) +
                    labs(title = paste("Patient", pid))
                })
   plot_grid(get_legend(pl[[1]] + theme(legend.position = "top")),
