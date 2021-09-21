@@ -51,7 +51,7 @@ render_parallel <- function(input, rpt, ...) {
 if (render_fit) {
 
   rpt <- available_models() %>%
-    expand_grid(Dataset = c("Derexyl", "PFDC")) %>%
+    expand_grid(Dataset = c("Derexyl", "PFDC", "Fake")) %>%
     mutate(Parameters = pmap(list(score = Score, dataset = Dataset, model = Model), list),
            OutputFile = glue::glue("fit_{Score}_{Model}_{Dataset}.html"))
 
@@ -64,7 +64,7 @@ if (render_fit) {
 if (render_perf) {
 
   rpt <- expand_grid(score = detail_POSCORAD()$Name,
-                     dataset = c("Derexyl", "PFDC"),
+                     dataset = c("Derexyl", "PFDC", "Fake"),
                      t_horizon = 4) %>%
     mutate(Parameters = pmap(list(score = score, dataset = dataset, t_horizon = t_horizon), list),
            OutputFile = glue::glue("perf{t_horizon}_{score}_{dataset}.html"))

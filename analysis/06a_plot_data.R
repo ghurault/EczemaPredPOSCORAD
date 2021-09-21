@@ -1,6 +1,6 @@
 # Notes -------------------------------------------------------------------
 
-# Plot distribuion of each severity item and (o)SCORAD
+# Plot distribution of each severity item and (o)SCORAD
 
 # Initialisation ----------------------------------------------------------
 

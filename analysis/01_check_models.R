@@ -106,7 +106,6 @@ if (FALSE) {
     scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
     scale_x_continuous(expand = c(0, 0), limits = c(0, 1)) +
     theme_bw(base_size = 15)
-  # ggsave(paste0("results/prior_amplitude_", score, "_", mdl_name, ".jpg"), width = 7, height = 8, units = "cm", dpi = 300, scale = 1.5)
 
   # Draw from predictive distribution (first patient)
   lapply(sample(nrow(yrep1), 4),

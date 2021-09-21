@@ -17,7 +17,7 @@ You should open this file in the browser rather than in RStudio viewer, otherwis
 ```{r fit-table, results='asis', echo=FALSE, message=FALSE}
 intensity_signs <- detail_POSCORAD("Intensity signs")$Name
 available_models() %>%
-    expand_grid(Dataset = c("Derexyl", "PFDC")) %>%
+    expand_grid(Dataset = c("Derexyl", "PFDC", "Fake")) %>%
   mutate(Model = factor(Model, levels = unique(Model))) %>%
   arrange(Model) %>%
   mutate(Link = file.path("..", "docs", paste0("fit_", Score, "_", Model, "_", Dataset, ".html")),
@@ -39,7 +39,7 @@ available_models() %>%
 
 ```{r validation-table, results='asis', echo=FALSE}
 expand_grid(Score = detail_POSCORAD()$Name,
-            Dataset = c("Derexyl", "PFDC")) %>%
+            Dataset = c("Derexyl", "PFDC", "Fake")) %>%
   mutate(Link = file.path("..", "docs", paste0("perf4_", Score, "_", Dataset, ".html")),
          File = paste0("[link](", Link, ")")) %>%
   filter(file.exists(Link)) %>%
