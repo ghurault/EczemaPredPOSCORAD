@@ -3,7 +3,7 @@
   [![R-CMD-check](https://github.com/ghurault/EczemaPredPOSCORAD/workflows/R-CMD-check/badge.svg)](https://github.com/ghurault/EczemaPredPOSCORAD/actions)
   <!-- badges: end -->
 
-This repository contains the code developed for [**TBC**](#)
+This repository contains the code developed for the article by [**Hurault et al., "EczemaPred: A computational framework for personalised prediction of eczema severity dynamics" (unpublished)**](#).
 
 The code is written in the R language for statistical computing and the probabilistic programming language [Stan](https://mc-stan.org/) for the models.
 
@@ -21,14 +21,14 @@ This project notably depends on three packages:
 
 - [EczemaPred](https://github.com/ghurault/EczemaPred), which contains the different Stan models, including the reference models.
 - [HuraultMisc](https://github.com/ghurault/HuraultMisc), my personal package containing various data analysis functions.
-- TanakaData, a proprietary package containing loading the datasets used in this study, but unavailable due to our data sharing agreement (**TBC**). This package includes the raw files as well as data processing functions.
+- TanakaData, a proprietary package containing loading the datasets used in this study. This package includes the raw files as well as data processing functions.
 
 The analysis was performed with [EczemaPred v0.1.0](https://github.com/ghurault/EczemaPred/releases/tag/v0.1.0) and [HuraultMisc version v1.1.1](https://github.com/ghurault/HuraultMisc/releases/tag/v1.1.1).
 
-The data is not available at the moment, but fake data similar to what the data has been simulated to check the code.
+In the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
+"Dataset 1" is not available due to our data sharing agreement, and "Dataset 2" will be made available shortly.
+Moreover, fake data similar to the datasets used in this study has been simulated to check the code.
 The data is generated in [`data-raw/generate_fakedata.R`](data-raw/generate_fakedata.R) and can be loaded with `EczemaPredPOSCORAD::FakeData`, `load_dataset("Fake")` and used in the analysis by setting the script-level parameter `dataset = "Fake"`.
-
-NB: in the code, "Dataset 1" correspond to the "Derexyl" dataset and "Dataset 2" to the "PFDC" datasets.
 
 ## File structure
 
