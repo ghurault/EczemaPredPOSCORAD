@@ -1,6 +1,6 @@
 Package: EczemaPredPOSCORAD
 Title: Predicting PO-SCORAD Using EczemaPred
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person(given = "Guillem",
            family = "Hurault",
@@ -26,7 +26,7 @@ Remotes:
     github::ghurault/EczemaPred
 Depends: 
     R (>= 2.10),
-    EczemaPred (>= 0.0.0.9000)
+    EczemaPred (>= 0.1.0)
 Suggests: 
     tidyverse,
     testthat (>= 3.0.0),
