@@ -3,7 +3,7 @@
   [![R-CMD-check](https://github.com/ghurault/EczemaPredPOSCORAD/workflows/R-CMD-check/badge.svg)](https://github.com/ghurault/EczemaPredPOSCORAD/actions)
   <!-- badges: end -->
 
-This repository contains the code developed for the article by [**Hurault et al., "EczemaPred: A computational framework for personalised prediction of eczema severity dynamics" (unpublished)**](#).
+This repository contains the code developed for the article by [**Hurault et al. (2022), "EczemaPred: A computational framework for personalised prediction of eczema severity dynamics"**](https://doi.org/10.1002/clt2.12140), published in Clinical and Translational Allergy.
 
 The code is written in the R language for statistical computing and the probabilistic programming language [Stan](https://mc-stan.org/) for the models.
 
@@ -60,4 +60,4 @@ Finally, [`data-raw/`](data-raw/) contains the code for the exported data availa
 
 ## License
 
-This open source version of this project is licensed under the GPLv3 license, which can be seen in the [LICENSE](LICENSE.md) file.
+The open source version of this project is licensed under the GPLv3 license, which can be seen in the [LICENSE](LICENSE.md) file.
